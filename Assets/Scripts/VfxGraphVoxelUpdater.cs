@@ -30,6 +30,8 @@ public class VfxGraphVoxelUpdater : MonoBehaviour
     private NativeArray<float3> positions;
     private NativeArray<Color32> colors;
     private NativeArray<BlockData> blockData;
+    private int usedBlockCount;
+    
 
     private unsafe void Start()
     {
@@ -43,7 +45,7 @@ public class VfxGraphVoxelUpdater : MonoBehaviour
         positions = new(blockCount, Allocator.Persistent);
         colors = new(blockCount, Allocator.Persistent);
         
-        SetBlockData();
+        //SetBlockData();
     }
 
     private void OnDestroy()
@@ -83,22 +85,20 @@ public class VfxGraphVoxelUpdater : MonoBehaviour
             blockDataBuf = new(GraphicsBuffer.Target.Structured, blockCount, sizeof(BlockData));
             effect.SetGraphicsBuffer(blockDataProp, blockDataBuf);
         }
-        
-        for (int i = 0; i < blockCount; i++)
-        {
-            float3 startOffset = -spawnRange / 2f;
-            positions[i] = startOffset + new float3(Random.value * spawnRange.x, Random.value *  spawnRange.y, Random.value * spawnRange.z);
-            colors[i] = new Color32((byte)Random.Range(0, 256), (byte)Random.Range(0, 256), (byte)Random.Range(0, 256), 0);
-        }
+
+        //float3 startOffset = -spawnRange / 2f;
+        usedBlockCount = BlockDataProvider.GetVoxelDataVox(positions, colors);
+        Debug.Log($"Imported: {usedBlockCount}");
     }
 
     private void UpdateBlocksVfx(NativeArray<float3> positions, NativeArray<Color32> colors)
     {
         Assert.AreEqual(positions.Length, colors.Length);
-        int len = positions.Length;
+        int len = usedBlockCount;
 
         new PopulateJob
         {
+            Length = usedBlockCount,
             Data = blockData,
             Positions = positions,
             Colors = colors,
@@ -129,13 +129,14 @@ public class VfxGraphVoxelUpdater : MonoBehaviour
     [BurstCompile]
     private struct PopulateJob : IJob
     {
+        public int Length;
         public NativeArray<BlockData> Data;
         public NativeArray<float3> Positions;
         public NativeArray<Color32> Colors;
         
         public void Execute()
         {
-            for (int i = 0; i < Data.Length; i++)
+            for (int i = 0; i < Length; i++)
             {
                 Data[i] = new BlockData
                 {

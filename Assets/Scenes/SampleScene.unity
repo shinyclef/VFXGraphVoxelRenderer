@@ -1048,7 +1048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 593fd9541f47e9743a9c6b1909c61d97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockSize: 0.5
+  blockSize: 1
   blockCount: 100000
   spawnRange:
     x: 200
